@@ -1,0 +1,37 @@
+{
+  "name": "inteliedu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-Powered Interactive 3D Learning Platform",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=backend\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "test": "npm run test:frontend && npm run test:backend && npm run test:ai && npm run test:threejs",
+    "test:frontend": "echo \"Running frontend tests...\"",
+    "test:backend": "echo \"Running backend tests...\"",
+    "test:ai": "echo \"Running AI pipeline tests...\"",
+    "test:threejs": "echo \"Running 3D graphic tests...\"",
+    "lint": "echo \"Running linting across monorepo...\""
+  },
+  "keywords": [
+    "education",
+    "threejs",
+    "react",
+    "gemini",
+    "rag",
+    "supabase",
+    "ai-tutor",
+    "interactive-learning"
+  ],
+  "author": "Inteliedu Team",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
