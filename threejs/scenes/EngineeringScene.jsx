@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ModelViewer from '../components/ModelViewer.jsx';
 import EngineMechanicsModel from '../models/engineering/EngineMechanicsModel.jsx';
-import { Gauge, Split, Play, Pause } from 'lucide-react';
+import { Gauge, Split, Play, Pause, Sparkles } from 'lucide-react';
 
 /**
  * EngineeringScene
@@ -27,12 +27,24 @@ export default function EngineeringScene({
     }
   };
 
+  const engineParts = [
+    { id: 'engine-block', name: 'Engine Block', category: 'Mechanical Engineering' },
+    { id: 'crankshaft', name: 'Crankshaft', category: 'Powertrain Mechanics' },
+    { id: 'piston-1', name: 'Piston #1', category: 'Combustion Mechanics' },
+    { id: 'piston-2', name: 'Piston #2', category: 'Combustion Mechanics' },
+    { id: 'piston-3', name: 'Piston #3', category: 'Combustion Mechanics' },
+    { id: 'piston-4', name: 'Piston #4', category: 'Combustion Mechanics' },
+    { id: 'spark-plug-1', name: 'Spark Plug #1', category: 'Electrical / Ignition' },
+    { id: 'drive-gear', name: 'Drive Spur Gear', category: 'Transmission Mechanics' },
+    { id: 'driven-gear', name: 'Driven Reduction Gear', category: 'Transmission Mechanics' },
+  ];
+
   const hudBg = isLight
-    ? 'bg-white/90 backdrop-blur-md border border-slate-200 shadow-xl shadow-slate-200/50 text-slate-700'
+    ? 'bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-slate-200/50 text-slate-700'
     : 'bg-slate-900/85 backdrop-blur-md border border-slate-800 shadow-xl text-slate-300';
 
   return (
-    <div className="relative w-full h-full min-h-0 flex-1">
+    <div className="relative w-full h-full min-h-0 flex-1 flex">
       <ModelViewer
         theme={theme}
         lightingPreset="studio"
@@ -43,7 +55,7 @@ export default function EngineeringScene({
         onSelectObject={handleSelect}
         onAskAiTutor={onAskAiTutor}
         enableShadows={true}
-        className="w-full h-full"
+        className="w-full h-full flex-1"
       >
         <EngineMechanicsModel
           selectedId={selectedPart?.id}
@@ -54,7 +66,7 @@ export default function EngineeringScene({
         />
       </ModelViewer>
 
-      {/* Engineering Control HUD Overlay */}
+      {/* Engineering Control HUD Overlay (Top Left) */}
       <div className={`absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2 px-3.5 py-2 rounded-2xl text-xs ${hudBg}`}>
         {/* RPM Speed Control */}
         <div className="flex items-center gap-1.5">
@@ -102,6 +114,36 @@ export default function EngineeringScene({
         >
           {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
         </button>
+      </div>
+
+      {/* Interactive Quick-Select Engine Parts List (Bottom Left) */}
+      <div className={`absolute bottom-4 left-4 z-10 max-w-md p-2.5 rounded-2xl ${hudBg} hidden sm:block`}>
+        <div className="flex items-center gap-1.5 mb-1.5 px-1">
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+            Inspect Engine Components:
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {engineParts.map((part) => {
+            const isSelected = selectedPart?.id === part.id;
+            return (
+              <button
+                key={part.id}
+                onClick={() => handleSelect(part)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all active:scale-95 ${
+                  isSelected
+                    ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/30'
+                    : isLight
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                }`}
+              >
+                {part.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

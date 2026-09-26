@@ -5,7 +5,8 @@ import ObjectLabel from '../labels/ObjectLabel.jsx';
 
 /**
  * InteractiveObject
- * Encapsulates an interactive 3D mesh with hover highlights, selection state, spatial labels, and educational metadata
+ * Robust interactive 3D mesh wrapper with guaranteed click/touch handling,
+ * hover highlight, selection glow, smooth scale lerping, and spatial labels.
  */
 export default function InteractiveObject({
   id,
@@ -23,11 +24,13 @@ export default function InteractiveObject({
   isSelected = false,
   showLabel = true,
   labelPosition = null,
+  theme = 'light',
   onSelect = null,
   children,
 }) {
   const meshRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const pointerDownPosRef = useRef({ x: 0, y: 0 });
 
   // Smooth scale animation on hover/selection
   useFrame(() => {
@@ -35,13 +38,12 @@ export default function InteractiveObject({
       const targetScale = isSelected ? 1.08 : isHovered ? 1.04 : 1.0;
       meshRef.current.scale.lerp(
         new THREE.Vector3(scale[0] * targetScale, scale[1] * targetScale, scale[2] * targetScale),
-        0.1
+        0.15
       );
     }
   });
 
-  const handleClick = (e) => {
-    e.stopPropagation();
+  const triggerSelection = () => {
     if (onSelect) {
       onSelect({
         id,
@@ -51,6 +53,26 @@ export default function InteractiveObject({
         metadata,
       });
     }
+  };
+
+  const handlePointerDown = (e) => {
+    e.stopPropagation();
+    pointerDownPosRef.current = { x: e.clientX || 0, y: e.clientY || 0 };
+  };
+
+  const handlePointerUp = (e) => {
+    e.stopPropagation();
+    const dx = Math.abs((e.clientX || 0) - pointerDownPosRef.current.x);
+    const dy = Math.abs((e.clientY || 0) - pointerDownPosRef.current.y);
+    // If movement is small (< 8px), it's a deliberate click/touch tap!
+    if (dx < 8 && dy < 8) {
+      triggerSelection();
+    }
+  };
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    triggerSelection();
   };
 
   const handlePointerOver = (e) => {
@@ -77,6 +99,8 @@ export default function InteractiveObject({
       <group
         ref={meshRef}
         onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
       >
@@ -106,7 +130,8 @@ export default function InteractiveObject({
           subtitle={category}
           isSelected={isSelected}
           visible={showLabel}
-          onClick={handleClick}
+          theme={theme}
+          onClick={triggerSelection}
         />
       )}
     </group>
