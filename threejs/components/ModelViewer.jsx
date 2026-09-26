@@ -11,8 +11,8 @@ import { LIGHTING_PRESETS } from '../utils/sceneUtils.js';
 
 /**
  * Reusable Educational 3D Model Viewer
- * Unifies R3F Canvas, GLTF/GLB loading, OrbitControls, lighting rigs, 
- * HUD controls, spatial labels, and AI Tutor handshake integration.
+ * Supports Full-screen responsive viewport, Light & Dark themes, OrbitControls,
+ * lighting rigs, floating HUD controls, spatial labels, and AI Tutor handshake integration.
  */
 export default function ModelViewer({
   model = null,
@@ -28,7 +28,7 @@ export default function ModelViewer({
   showHUDControls = true,
   showLabels = true,
   autoCenter = true,
-  backgroundColor = 'transparent',
+  theme = 'light', // 'light' | 'dark'
   onSelectObject = null,
   selectedObject = null,
   onAskAiTutor = null,
@@ -57,15 +57,27 @@ export default function ModelViewer({
   };
 
   const activeLighting = LIGHTING_PRESETS[lightingPreset] || LIGHTING_PRESETS.studio;
+  const isLightTheme = theme === 'light';
+
+  const canvasBgColor = isLightTheme 
+    ? (lightingPreset === 'space' ? '#090d16' : '#f8fafc')
+    : '#020617';
 
   return (
-    <div className={`relative w-full h-full min-h-[400px] select-none overflow-hidden rounded-2xl bg-slate-950/90 border border-slate-800 ${className}`}>
+    <div
+      className={`relative w-full h-full flex-1 min-h-0 select-none overflow-hidden rounded-2xl transition-colors duration-300 ${
+        isLightTheme 
+          ? 'bg-slate-50 border border-slate-200/80 shadow-inner' 
+          : 'bg-slate-950 border border-slate-800'
+      } ${className}`}
+    >
       <ErrorBoundary>
         <Canvas
           shadows={enableShadows}
           camera={{ position: cameraPosition, fov: cameraFov }}
-          style={{ background: backgroundColor }}
+          style={{ width: '100%', height: '100%', background: canvasBgColor }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+          resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}
         >
           {/* Lighting Rig */}
           <ambientLight
@@ -142,10 +154,11 @@ export default function ModelViewer({
             {enableShadows && (
               <ContactShadows
                 position={[0, -0.05, 0]}
-                opacity={0.5}
-                scale={10}
-                blur={1.5}
-                far={4}
+                opacity={isLightTheme ? 0.35 : 0.6}
+                scale={12}
+                blur={1.8}
+                far={5}
+                color={isLightTheme ? '#475569' : '#000000'}
               />
             )}
           </Suspense>
@@ -155,6 +168,7 @@ export default function ModelViewer({
       {/* Floating HUD Control Toolbar */}
       {showHUDControls && (
         <ModelControls
+          theme={theme}
           onResetCamera={handleResetCamera}
           isAutoRotating={isAutoRotating}
           onToggleAutoRotate={() => setIsAutoRotating((prev) => !prev)}
@@ -169,6 +183,7 @@ export default function ModelViewer({
 
       {/* Object Metadata & AI Tutor Inspection Panel */}
       <ObjectInfoPanel
+        theme={theme}
         selectedObject={activeSelected}
         onClose={() => handleObjectSelect(null)}
         onAskAiTutor={onAskAiTutor}

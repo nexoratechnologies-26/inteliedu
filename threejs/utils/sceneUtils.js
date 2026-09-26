@@ -33,7 +33,6 @@ export function disposeObjectTree(obj) {
 export function disposeMaterial(mat) {
   if (!mat) return;
   
-  // Dispose all possible texture maps
   const textureKeys = [
     'map', 'roughnessMap', 'metalnessMap', 'normalMap', 
     'bumpMap', 'displacementMap', 'alphaMap', 'emissiveMap', 
@@ -52,30 +51,30 @@ export function disposeMaterial(mat) {
 }
 
 /**
- * Lighting presets tailored for different educational scene genres
+ * Lighting presets tailored for Light and Dark themes
  */
 export const LIGHTING_PRESETS = {
   studio: {
-    ambient: { color: '#ffffff', intensity: 0.8 },
+    ambient: { color: '#ffffff', intensity: 1.2 },
     directional: [
-      { position: [10, 15, 10], intensity: 1.5, castShadow: true },
-      { position: [-10, 10, -10], intensity: 0.5, castShadow: false },
+      { position: [8, 12, 8], intensity: 1.8, castShadow: true, color: '#ffffff' },
+      { position: [-8, 8, -6], intensity: 0.8, castShadow: false, color: '#e0f2fe' },
     ],
-    point: [{ position: [0, 5, 0], intensity: 0.8, color: '#93c5fd' }],
-  },
-  space: {
-    ambient: { color: '#1e1b4b', intensity: 0.2 },
-    directional: [
-      { position: [0, 0, 0], intensity: 3.0, color: '#fef08a', castShadow: true }, // Sun central light
-    ],
-    point: [{ position: [0, 0, 0], intensity: 2.0, color: '#ffffff' }],
+    point: [{ position: [0, 4, 3], intensity: 0.6, color: '#ffffff' }],
   },
   laboratory: {
-    ambient: { color: '#f8fafc', intensity: 1.0 },
+    ambient: { color: '#f8fafc', intensity: 1.4 },
     directional: [
-      { position: [5, 10, 7], intensity: 1.2, castShadow: true },
-      { position: [-5, -5, -5], intensity: 0.4, castShadow: false },
+      { position: [6, 12, 8], intensity: 1.6, castShadow: true, color: '#ffffff' },
+      { position: [-6, -4, -4], intensity: 0.6, castShadow: false, color: '#bae6fd' },
     ],
-    point: [],
+    point: [{ position: [0, 2, 4], intensity: 0.8, color: '#38bdf8' }],
+  },
+  space: {
+    ambient: { color: '#1e293b', intensity: 0.4 },
+    directional: [
+      { position: [0, 0, 0], intensity: 3.5, color: '#fef08a', castShadow: true },
+    ],
+    point: [{ position: [0, 0, 0], intensity: 2.5, color: '#ffffff' }],
   },
 };
