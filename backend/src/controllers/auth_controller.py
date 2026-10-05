@@ -1,22 +1,24 @@
-from src.validators.auth_validator import RegisterRequest, LoginRequest
+﻿from src.validators.auth_validator import SignupRequest, LoginRequest
+from src.utils.response import success_response
 
 
-def register_user(data: RegisterRequest):
+def signup_user(data: SignupRequest):
     # TEMPORARY: dummy response. Real Supabase call comes later via services/
-    return {
-        "message": "Registration endpoint works (dummy)",
-        "user": {
-            "full_name": data.full_name,
-            "email": data.email,
-            "role": data.role,
+    return success_response(
+        data={
+            "user": {
+                "full_name": data.full_name,
+                "email": data.email,
+                "role": data.role,
+            }
         },
-    }
+        message="Signup endpoint works (dummy)",
+    )
 
 
 def login_user(data: LoginRequest):
     # TEMPORARY: dummy response
-    return {
-        "message": "Login endpoint works (dummy)",
-        "access_token": "dummy-token",
-        "token_type": "bearer",
-    }
+    return success_response(
+        data={"access_token": "dummy-token", "token_type": "bearer"},
+        message="Login endpoint works (dummy)",
+    )
