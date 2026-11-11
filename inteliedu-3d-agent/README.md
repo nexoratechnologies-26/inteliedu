@@ -40,6 +40,7 @@ During Phase 1 environment verification on this workstation:
 - **LLM Credentials**: `GROQ_API_KEY` is configured in root `.env`; `app/config.py` loads it without exposing keys.
 - **Missing External Dependencies on Host**:
   - **Blender / Blender MCP**: `C:\Program Files\Blender Foundation\Blender 4.3` contains partial `python`/`scripts` directories without `blender.exe`, and `uvx` / Blender MCP server is not installed on PATH.
+  - **Zero-Local-Storage Alternatives**: Configure `BLENDER_MCP_URL` (remote Streamable HTTP Blender MCP) or `RUNWAY_API_KEY` / `RUNWAY_MCP_URL` (with `ALLOW_RUNWAY_FALLBACK=true`) so video rendering runs remotely without installing Blender locally.
   - **Runway**: Neither `RUNWAY_API_KEY` nor `RUNWAY_MCP_URL`/`RUNWAY_MCP_COMMAND` is configured yet.
   - **PostgreSQL / Supabase Storage**: `DATABASE_URL` and `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` are not configured yet; the agent automatically uses local SQLite (`generated/metadata.db`) and local object storage (`generated/storage/`) until configured.
 
@@ -72,6 +73,7 @@ cp .env.example .env
 
 | Method | Endpoint | Purpose |
 | :--- | :--- | :--- |
+| `GET` | `/` | Built-in browser test console |
 | `GET` | `/health` | Service health and live capability availability |
 | `GET` | `/api/v1/3d-agent/capabilities` | Detailed live availability report |
 | `POST` | `/api/v1/3d-agent/plan` | Generate & validate storyboard without rendering |

@@ -340,6 +340,46 @@ class ThreeDGenerationGraph:
                         f"Scene {scene.scene_id} rendered via {res.engine_used}: {res.output_path}",
                     )
             except DependencyUnavailableError as exc:
+                runway_available = bool(
+                    self.settings.allow_runway_fallback
+                    and (
+                        self.settings.runway_api_key
+                        or self.runway_mcp_client.build_server_config() is not None
+                    )
+                )
+                if runway_available:
+                    sb_dict = dict(state["storyboard"])
+                    updated_scenes = []
+                    for s_raw in sb_dict.get("scenes", []):
+                        s_copy = dict(s_raw)
+                        if s_copy.get("render_engine") in ("blender", "existing_asset_blender"):
+                            s_copy["render_engine"] = "runway"
+                        updated_scenes.append(s_copy)
+                    sb_dict["scenes"] = updated_scenes
+                    decision = dict(state.get("routing_decision") or {})
+                    decision["uses_runway"] = True
+                    logs = append_job_log(
+                        logs,
+                        "generate_blender_scenes",
+                        "Blender unavailable locally; falling back to Runway AI video generation.",
+                        level="WARNING",
+                        details={"missing_blender": exc.missing_dependencies},
+                    )
+                    next_state: AgentState = {
+                        **state,
+                        "status": "processing",
+                        "progress_pct": 68,
+                        "current_stage": "generate_blender_scenes",
+                        "message": "Blender unavailable; routing scenes to Runway AI fallback.",
+                        "storyboard": sb_dict,
+                        "routing_decision": decision,
+                        "generated_scripts": generated_scripts,
+                        "actual_engine_used": "runway_fallback",
+                        "logs": logs,
+                    }
+                    self._persist_progress(next_state)
+                    return next_state
+
                 for dep in exc.missing_dependencies:
                     if dep not in missing:
                         missing.append(dep)
@@ -351,7 +391,7 @@ class ThreeDGenerationGraph:
                     level="ERROR",
                     details={"script_path": str(script_path), "missing": exc.missing_dependencies},
                 )
-                next_state: AgentState = {
+                next_state = {
                     **state,
                     "status": "blocked",
                     "progress_pct": 65,

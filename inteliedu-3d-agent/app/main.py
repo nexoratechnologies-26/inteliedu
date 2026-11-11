@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from app import __version__
+from app.api.console import CONSOLE_HTML
 from app.api.routes import router as agent_router
 from app.config import Settings, get_settings
 from app.utils.error_handler import register_exception_handlers
@@ -51,6 +53,14 @@ def create_app(custom_settings: Settings | None = None) -> FastAPI:
     )
     register_exception_handlers(app)
     app.include_router(agent_router, prefix=settings.agent_api_prefix)
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    async def root_console():
+        return HTMLResponse(content=CONSOLE_HTML)
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():
+        return Response(status_code=204)
 
     @app.get("/health")
     async def health():

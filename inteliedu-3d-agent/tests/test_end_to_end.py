@@ -406,6 +406,10 @@ def test_7_api_storage_caching_retrieval_and_deletion(tmp_path: Path):
     app.dependency_overrides[get_generation_service] = lambda: service
 
     with TestClient(app) as client:
+        root_resp = client.get("/")
+        assert root_resp.status_code == 200
+        assert "Inteliedu 3D" in root_resp.text
+
         health = client.get("/health")
         assert health.status_code == 200
         assert health.json()["capabilities"]["ffmpeg"]["available"] is True
@@ -505,4 +509,58 @@ def test_api_retry_blocked_job_and_auth_guard(tmp_path: Path):
         retry_resp = client.post(f"/api/v1/3d-agent/retry/{job_id}", headers=headers)
         assert retry_resp.status_code == 200
         assert retry_resp.json()["retried_from_job_id"] == job_id
+
+
+def test_remote_blender_mcp_url_config(tmp_path: Path):
+    settings = _make_test_settings(tmp_path)
+    settings.blender_mcp_url = "https://blender-mcp.example.com/mcp"
+    settings.blender_mcp_token = "remote-token"
+    client = BlenderMCPClient(settings=settings)
+    cfg = client.build_server_config()
+    assert cfg is not None
+    assert cfg.transport == "streamable_http"
+    assert cfg.url == "https://blender-mcp.example.com/mcp"
+    assert cfg.headers == {"Authorization": "Bearer remote-token"}
+
+
+@pytest.mark.asyncio
+async def test_allow_runway_fallback_when_blender_unavailable(tmp_path: Path):
+    settings = _make_test_settings(tmp_path, with_mcp_harness=False)
+    settings.allow_runway_fallback = True
+    settings.runway_api_key = "test_rw_fallback_key"
+    ffmpeg_bin = settings.resolved_ffmpeg_path
+
+    clip_sample = _make_ffmpeg_clip(ffmpeg_bin, tmp_path / "rw_source.mp4", duration=1.5, size="640x360")
+    clip_bytes = clip_sample.read_bytes()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/text_to_video":
+            return httpx.Response(200, json={"id": "rw-fb-1"})
+        if request.url.path == "/v1/tasks/rw-fb-1":
+            return httpx.Response(
+                200,
+                json={"id": "rw-fb-1", "status": "SUCCEEDED", "output": ["https://cdn.example/fb.mp4"]},
+            )
+        if str(request.url) == "https://cdn.example/fb.mp4":
+            return httpx.Response(200, content=clip_bytes)
+        return httpx.Response(404)
+
+    orig_client = httpx.AsyncClient
+
+    class MockedAsyncClient(orig_client):
+        def __init__(self, *args, **kwargs):
+            kwargs["transport"] = httpx.MockTransport(handler)
+            super().__init__(*args, **kwargs)
+
+    httpx.AsyncClient = MockedAsyncClient  # type: ignore
+    try:
+        graph = ThreeDGenerationGraph(settings=settings)
+        req = GenerationRequest(topic="Rotating Cube", **{"class": 7}, subject="Mathematics", duration=6)
+        state = await graph.run("job-rw-fallback", req)
+        assert state["status"] == "completed", state.get("errors")
+        assert state["routing_decision"]["uses_runway"] is True
+        assert state["stored_video"]["generation_engine"].startswith("runway")
+        assert Path(state["stored_video"]["local_video_path"]).is_file()
+    finally:
+        httpx.AsyncClient = orig_client  # type: ignore
 

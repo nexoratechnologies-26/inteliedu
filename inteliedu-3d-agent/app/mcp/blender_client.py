@@ -47,6 +47,16 @@ class BlenderMCPClient:
         self.mcp_manager = mcp_manager or MCPClientManager(registry=self.registry)
 
     def build_server_config(self) -> Optional[MCPServerConfig]:
+        if self.settings.blender_mcp_url:
+            headers: Dict[str, str] = {}
+            if self.settings.blender_mcp_token:
+                headers["Authorization"] = f"Bearer {self.settings.blender_mcp_token}"
+            return MCPServerConfig(
+                name=self.SERVER_NAME,
+                transport="streamable_http",
+                url=self.settings.blender_mcp_url,
+                headers=headers,
+            )
         if not self.settings.blender_mcp_command:
             return None
         return MCPServerConfig(
@@ -200,7 +210,7 @@ class BlenderMCPClient:
 
         missing = []
         if not cfg:
-            missing.append("BLENDER_MCP_COMMAND (not configured)")
+            missing.append("BLENDER_MCP_URL / BLENDER_MCP_COMMAND (not configured)")
         elif mcp_error_message:
             missing.append(f"Blender MCP server ({mcp_error_message})")
         missing.append(

@@ -78,6 +78,8 @@ class Settings(BaseSettings):
     blender_executable_path: str = Field(
         default="C:/Program Files/Blender Foundation/Blender 4.3/blender.exe"
     )
+    blender_mcp_url: Optional[str] = Field(default=None)
+    blender_mcp_token: Optional[str] = Field(default=None)
     blender_mcp_command: str = Field(default="")
     blender_mcp_args: str = Field(default="")
     blender_mcp_host: str = Field(default="127.0.0.1")
@@ -222,10 +224,11 @@ class Settings(BaseSettings):
                 "configured": bool(llm_cfg["api_key"]),
             },
             "blender_mcp": {
+                "url": self.blender_mcp_url,
                 "command": self.blender_mcp_command or None,
                 "args": self.parsed_blender_mcp_args(),
-                "configured": bool(self.blender_mcp_command),
-                "executable_found": blender_mcp_cmd_ok,
+                "configured": bool(self.blender_mcp_url or self.blender_mcp_command),
+                "executable_found": bool(self.blender_mcp_url or blender_mcp_cmd_ok),
             },
             "blender_cli": {
                 "configured_path": self.blender_executable_path,
